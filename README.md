@@ -4,23 +4,24 @@
 A empresa Sweet Lift Taxi coletou dados históricos sobre pedidos de táxi nos aeroportos. Para atrair mais motoristas durante o horário de pico, precisamos prever a quantidade de pedidos de táxi para a próxima hora. Construímos diversos modelos preditivos para alcançar este objetivo, avaliando-os com base na REQM (Raíz do Erro Quadrático Médio) e no tempo de treinamento.
 
 ## Índice
-1. [Preparação](#preparação)
-2. [Análise dos Dados](#análise-dos-dados)
+- [Previsão de Demanda de Táxis da Sweet Lift](#previsão-de-demanda-de-táxis-da-sweet-lift)
+  - [Descrição do Projeto](#descrição-do-projeto)
+  - [Índice](#índice)
+  - [Preparação](#preparação)
+  - [Análise dos Dados](#análise-dos-dados)
     - [Decomposição](#decomposição)
     - [Diferenças de Séries Temporais](#diferenças-de-séries-temporais)
     - [Criação de Características](#criação-de-características)
     - [Divisão dos Dados](#divisão-dos-dados)
-3. [Treinamento e Avaliação dos Modelos](#treinamento-e-avaliação-dos-modelos)
+  - [Treinamento e Avaliação dos Modelos](#treinamento-e-avaliação-dos-modelos)
     - [Regressão Linear](#regressão-linear)
     - [Floresta Aleatória](#floresta-aleatória)
     - [CatBoost](#catboost)
     - [LightGBM](#lightgbm)
     - [XGBoost](#xgboost)
-4. [Resultados](#resultados)
-5. [Testes Adicionais](#testes-adicionais)
-    - [Análise de REQM](#análise-de-rmse)
-    - [Análise de Tempo de Treinamento](#análise-de-tempo-de-treinamento)
-6. [Conclusão](#conclusão)
+  - [Resultados](#resultados)
+  - [Testes Adicionais](#testes-adicionais)
+  - [Conclusão](#conclusão)
 
 ## Preparação
 Os dados foram reamostrados para intervalos de uma hora para melhor adequação aos modelos de previsão.
@@ -56,27 +57,29 @@ Um modelo de Floresta Aleatória foi treinado, mostrando melhorias em relação 
 O modelo CatBoost apresentou o melhor desempenho em termos de REQM, apesar de um tempo de treinamento mais longo.
 
 ### LightGBM
-O LightGBM também mostrou bons resultados, com um equilíbrio entre tempo de treinamento e REQM, porém, o REQM obtido foi um pouco pior do que o CatBoost.
+O LightGBM também mostrou bons resultados, com um equilíbrio entre tempo de treinamento e REQM, porém, o REQM obtido foi pior do que o do CatBoost e também do XGBoost.
 
 ### XGBoost
-O XGBoost foi testado e apresentou resultados competitivos, mas com um tempo de treinamento muito mais longo.
+O XGBoost foi testado e apresentou resultados competitivos de REQM e com um tempo de treinamento mais adequado do que o do CatBoost.
 
 ## Resultados
-Os resultados mostraram que o modelo CatBoost obteve o menor RMSE, tornando-se a melhor escolha para previsão de demanda de táxis. O tempo de treinamento, embora maior que os outros modelos, foi considerado aceitável devido à precisão alcançada.
+Os resultados mostraram que o modelo XGBoost apresentou melhor equilíbrio entre REQM e tempo de treinamento, tornando-se a melhor escolha para previsão de demanda de táxis.
 
 ## Testes Adicionais
 
-### Análise de REQM
-Foram realizados testes adicionais com diferentes conjuntos de características:
-- `num_orders`: treinamento dos modelos usando apenas a coluna num_orders com os dados originais;
-- `diff`: treinamento dos modelos usando apenas a coluna diff com dados das diferenças de séries temporais;
-- `diff_24`: treinamento dos modelos usando a coluna diff + características + lag=24 + rolling_mean=24;
-- `diff_100`: treinamento dos modelos usando a coluna diff + características + lag=100 + rolling_mean=100;
-- `both_100`: treinamento dos modelos usando colunas diff + num_orders + características + lag=100 + rolling_mean=100;
-- `both_24`: treinamento dos modelos usando coluna diff + num_orders + características + lag=24 + rolling_mean=24.
 
-### Análise de Tempo de Treinamento
-O tempo de treinamento foi analisado para cada conjunto de características e modelo, destacando-se a Regressão Linear com o menor tempo, mas com resultados de REQM não confiáveis.
+Foram realizados testes adicionais com diferentes conjuntos de características:
+
+`created_24` - treinamento dos modelos usando as características criadas (exceto a coluna 'diff') + lag=24 + rolling_mean=24,
+
+`diff_24`   - treinamento dos modelos usando as características criadas + coluna 'diff' + lag=24 + rolling_mean=24,
+
+`diff_100`  - treinamento dos modelos usando as características criadas + coluna 'diff' + lag=100 + rolling_mean=100,
+
 
 ## Conclusão
-O modelo CatBoost foi o melhor desempenho para a previsão de demanda de táxis, considerando o REQM e o tempo de treinamento. A análise de diferentes conjuntos de características demonstrou que a combinação de dados originais com diferenças de séries temporais, além das demais características criadas, como `dia`, `dia da semana`, `mês`, `média móvel` e `dados de defasagem` produziu os melhores resultados.
+Ficou evidente que a coluna 'diff', com as diferenças das séries temporais apresentou uma importância muito grande na melhoria dos modelos, sendo que os testes que retornaram os melhores REQM foram os que incluíram esta coluna.
+
+O aumento das colunas de dados de defasagem de 24 para 100, assim como o aumento da média móvel de 24 para 100, refletiram em uma melhora irrelevante no REQM se comparado ao prejuízo que elas trouxeram em relação ao tempo para o treinamento do modelo
+
+Após analisar todos os testes, **o modelo XGBoost do teste diff_24**  (incluindo todas as características criadas + coluna 'diff' + lag=24 + rolling_mean=24), obteve o melhor desempenho para a previsão de demanda de táxis, considerando o equilíbrio entre REQM e o tempo de treinamento.
